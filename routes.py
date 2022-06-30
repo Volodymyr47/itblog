@@ -1,18 +1,16 @@
 from datetime import datetime
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from flask_login import current_user, login_user, login_required, logout_user
-from sqlalchemy.exc import InvalidRequestError, IntegrityError, DataError, InterfaceError, DatabaseError
-from werkzeug.routing import BuildError
-from werkzeug.security import check_password_hash, generate_password_hash
 
-from app import app, login_manager, db
-from forms import login_form, register_form
-from models import User, Article
+from flask import render_template, request, redirect #, url_for, flash
+from flask_login import current_user, login_required #, login_user,  logout_user
+# from sqlalchemy.exc import InvalidRequestError, IntegrityError, DataError, InterfaceError, DatabaseError
+# from werkzeug.routing import BuildError
+# from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.exceptions import abort
 
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+from app import app
+from extention import db
+# from forms import login_form, register_form
+from models import Article # User,
 
 
 @app.route('/')
@@ -24,69 +22,6 @@ def index():
 @app.route('/about')
 def about():
     return render_template('about.html')
-
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    form = register_form()
-    if form.validate_on_submit():
-        try:
-            email = form.email.data
-            passwd = form.passwd.data
-            username = form.username.data
-
-            new_user = User(username=username, email=email, passwd=generate_password_hash(passwd))
-
-            db.session.add(new_user)
-            db.session.commit()
-            flash('Account successfully created', 'success')
-            return redirect(url_for('login'))
-
-        except InvalidRequestError:
-            db.session.rollback()
-            flash('Something is wrong!', 'danger')
-        except IntegrityError:
-            db.session.rollback()
-            flash('User already exists!.', 'warning')
-        except DataError:
-            db.session.rollback()
-            flash('Invalid Entry', 'warning')
-        except InterfaceError:
-            db.session.rollback()
-            flash('Error connecting to the database', 'danger')
-        except DatabaseError:
-            db.session.rollback()
-            flash('Error connecting to the database', 'danger')
-        except BuildError:
-            db.session.rollback()
-            flash('An error occured !', 'danger')
-    return render_template('register.html',form=form,text='Create account',title='Register',btn_action='Register account')
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    form = login_form()
-    if form.validate_on_submit():
-        try:
-            user = User.query.filter_by(email=form.email.data).first()
-            if user is None:
-                flash('User is None', 'danger')
-            else:
-                if check_password_hash(user.passwd, form.passwd.data):
-                    login_user(user)
-                    return redirect(url_for('index'))
-                else:
-                    flash('Invalid username or password!', 'danger')
-        except Exception as e:
-            flash(e, 'danger')
-    return render_template('login.html', form=form, text='Login', title='Login', btn_action='Login')
-
-
-@app.route("/logout")
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
 
 
 @app.route('/add-article', methods=['POST', 'GET'])
@@ -110,14 +45,16 @@ def add_article():
 
 @app.route('/posts')
 def posts():
-    articles = Article().query.order_by(Article.dlm.desc()).all()
+    articles = db.session.query(Article).order_by(Article.dlm.desc()).all()
+        # Article().query.order_by(Article.dlm.desc()).all()
     return render_template('posts.html', articles=articles)
 
 
 @app.route('/posts/<int:id>')
 def article_detail(id):
     if id:
-        article = Article().query.get(id)
+        article = db.session.query(Article).get(id)
+
         return render_template('article_detail.html', article=article)
     else:
         return f'Post {id} does nor exist'
@@ -126,7 +63,9 @@ def article_detail(id):
 @app.route('/posts/<int:id>/delete')
 @login_required
 def article_delete(id):
-    article = Article().query.get_or_404(id)
+    article = db.session.get(Article, id) #query(Article).get(id) # Article().query.get_or_404(id)
+    if article is None:
+        abort(404)
     try:
         db.session.delete(article)
         db.session.commit()
@@ -138,7 +77,7 @@ def article_delete(id):
 @app.route('/posts/<int:id>/update', methods=['POST', 'GET'])
 @login_required
 def article_update(id):
-    article = Article().query.get(id)
+    article = db.session.query(Article).get(id)
     if request.method == 'POST':
         article.title = request.form['title']
         article.intro = request.form['intro']
@@ -158,3 +97,73 @@ def article_update(id):
 @app.route('/password_forgot')
 def password_forgot():
     return render_template('password_forgot.html')
+
+
+
+
+# @login_manager.user_loader
+# def load_user(user_id):
+#     return User.query.get(int(user_id))
+
+
+# @app.route('/register', methods=['GET', 'POST'])
+# def register():
+#     form = register_form()
+#     if form.validate_on_submit():
+#         try:
+#             email = form.email.data
+#             passwd = form.passwd.data
+#             username = form.username.data
+#
+#             new_user = User(username=username, email=email, passwd=generate_password_hash(passwd))
+#
+#             db.session.add(new_user)
+#             db.session.commit()
+#             flash('Account successfully created', 'success')
+#             return redirect(url_for('login'))
+#
+#         except InvalidRequestError:
+#             db.session.rollback()
+#             flash('Something is wrong!', 'danger')
+#         except IntegrityError:
+#             db.session.rollback()
+#             flash('User already exists!.', 'warning')
+#         except DataError:
+#             db.session.rollback()
+#             flash('Invalid Entry', 'warning')
+#         except InterfaceError:
+#             db.session.rollback()
+#             flash('Error connecting to the database', 'danger')
+#         except DatabaseError:
+#             db.session.rollback()
+#             flash('Error connecting to the database', 'danger')
+#         except BuildError:
+#             db.session.rollback()
+#             flash('An error occured !', 'danger')
+#     return render_template('register.html',form=form,text='Create account',title='Register',btn_action='Register account')
+#
+#
+# @app.route('/login', methods=['GET', 'POST'])
+# def login():
+#     form = login_form()
+#     if form.validate_on_submit():
+#         try:
+#             user = User.query.filter_by(email=form.email.data).first()
+#             if user is None:
+#                 flash('User is None', 'danger')
+#             else:
+#                 if check_password_hash(user.passwd, form.passwd.data):
+#                     login_user(user)
+#                     return redirect(url_for('index'))
+#                 else:
+#                     flash('Invalid username or password!', 'danger')
+#         except Exception as e:
+#             flash(e, 'danger')
+#     return render_template('login.html', form=form, text='Login', title='Login', btn_action='Login')
+#
+#
+# @app.route("/logout")
+# @login_required
+# def logout():
+#     logout_user()
+#     return redirect(url_for('login'))

@@ -1,31 +1,33 @@
 from datetime import datetime
-from flask_login import UserMixin
-from app import db
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text
+
+from extention import Base
 
 
+class Article(Base):
+    __tablename__ = 'article'
 
-class Article(db.Model):
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    title = db.Column(db.String(100), nullable=False)
-    intro = db.Column(db.String(300), nullable=False)
-    text = db.Column(db.Text, nullable=False)
-    dlm = db.Column(db.DateTime, default=datetime.utcnow)
-    creation_date = db.Column(db.DateTime, default=datetime.utcnow)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    title = Column(String(100), nullable=False)
+    intro = Column(String(300), nullable=False)
+    text = Column(Text, nullable=False)
+    dlm = Column(DateTime, default=datetime.utcnow)
+    creation_date = Column(DateTime, default=datetime.utcnow)
 
     def __repr__(self):
         return '<Article %r>' % self.id
 
 
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(100), nullable=False, unique=True)
-    passwd = db.Column(db.String(254), nullable=False)
-    email = db.Column(db.String(100), nullable=False, unique=True)
-    is_active = db.Column(db.Boolean, default=True)
-    register_date = db.Column(db.DateTime, default=datetime.utcnow)
-    dlm = db.Column(db.DateTime, default=datetime.utcnow)
-
-    def __repr__(self):
-        return '<User %r>' % self.username
+# class User(UserMixin, app.Model):
+#     id = app.Column(app.Integer, primary_key=True, autoincrement=True)
+#     username = app.Column(app.String(100), nullable=False, unique=True)
+#     passwd = app.Column(app.String(254), nullable=False)
+#     email = app.Column(app.String(100), nullable=False, unique=True)
+#     is_active = app.Column(app.Boolean, default=True)
+#     register_date = app.Column(app.DateTime, default=datetime.utcnow)
+#     dlm = app.Column(app.DateTime, default=datetime.utcnow)
+#
+#     def __repr__(self):
+#         return '<User %r>' % self.username
 

@@ -31,9 +31,9 @@
       {% if current_user.is_authenticated %}
         <p class="mr-3">Hello, {{ current_user.username }}</p>
         <a class="btn btn-warning mr-3" href="/add-article">Add article</a>
-        <a class="btn btn-outline-info" href="/logout">Logout</a>
+        <a class="btn btn-outline-info" href="{{ url_for('users.logout') }}">Logout</a>
       {% else %}
-        <a class="btn btn-outline-info" href="/login">Login</a>
+        <a class="btn btn-outline-info" href="{{ url_for('users.login') }}" >Login</a>
       {% endif %}
     </div>
 

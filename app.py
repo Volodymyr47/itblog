@@ -1,22 +1,37 @@
-from flask import Flask
-from flask_login import LoginManager
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
+from flask import Flask, url_for
+from flask_login import current_user, LoginManager
+from extention import db
 from flask_mail import Mail
 
-import forms
+from users.users import users
+from admin.admin import admin
+
+# import forms
 
 app = Flask(__name__)
 
 # DB
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blog.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
+app.config['EXPLAIN_TEMPLATE_LOADING'] = True
+
+
+# Blueprint
+app.register_blueprint(users, url_prefix='/users')
+app.register_blueprint(admin, url_prefix='/admin')
+
+app.secret_key = 'bdadc3c3cf4166a1c1c5a1b4a6b18a36012b4f5c3cb7bd04f76f91ebd8d6a1b2'
+
 
 #Login
 login_manager = LoginManager(app)
 login_manager.session_protection = 'strong'
+#
+#
+@login_manager.user_loader
+def load_user(user_id):
+    from users.models import User
+    return db.session.query(User).get(int(user_id)) # User.query.get(int(user_id))
 
 # Mail
 app.config['MAIL_SERVER']='smtp.gmail.com'
@@ -31,6 +46,7 @@ mail = Mail(app)
 from routes import *
 
 if __name__ == '__main__':
+    db.init_app(app)
     app.run(debug=True)
 
 
