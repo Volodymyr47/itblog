@@ -1,15 +1,10 @@
 from datetime import datetime
-
-from flask import render_template, request, redirect #, url_for, flash
-from flask_login import current_user, login_required #, login_user,  logout_user
-# from sqlalchemy.exc import InvalidRequestError, IntegrityError, DataError, InterfaceError, DatabaseError
-# from werkzeug.routing import BuildError
-# from werkzeug.security import check_password_hash, generate_password_hash
+from flask import render_template, request, redirect
+from flask_login import current_user, login_required
 from werkzeug.exceptions import abort
 
 from app import app
 from extention import db
-# from forms import login_form, register_form
 from models import Article # User,
 
 
@@ -57,7 +52,7 @@ def article_detail(id):
 
         return render_template('article_detail.html', article=article)
     else:
-        return f'Post {id} does nor exist'
+        return f'Post {id} does not exist'
 
 
 @app.route('/posts/<int:id>/delete')

@@ -1,10 +1,11 @@
-from flask import Flask, url_for
+from flask import Flask
 from flask_login import current_user, LoginManager
-from extention import db
 from flask_mail import Mail
+
 
 from users.users import users
 from admin.admin import admin
+from extention import db, migrate
 
 # import forms
 
@@ -15,19 +16,20 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blog.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['EXPLAIN_TEMPLATE_LOADING'] = True
 
-
 # Blueprint
 app.register_blueprint(users, url_prefix='/users')
 app.register_blueprint(admin, url_prefix='/admin')
 
 app.secret_key = 'bdadc3c3cf4166a1c1c5a1b4a6b18a36012b4f5c3cb7bd04f76f91ebd8d6a1b2'
 
+db.init_app(app)
+migrate.init_app(app, db)
 
 #Login
 login_manager = LoginManager(app)
 login_manager.session_protection = 'strong'
-#
-#
+
+
 @login_manager.user_loader
 def load_user(user_id):
     from users.models import User
@@ -46,7 +48,6 @@ mail = Mail(app)
 from routes import *
 
 if __name__ == '__main__':
-    db.init_app(app)
     app.run(debug=True)
 
 

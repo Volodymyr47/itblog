@@ -1,11 +1,10 @@
-{% extends 'base/base.html' %}
+{% extends 'admbase.html' %}
 
 {% block title %}
     {{ title }}
 {% endblock %}
 
 {% block body %}
-
 <div class="container">
     <div class="row mt-4">
         <div class="col-lg-5 col-md-6 m-auto card p-4">
@@ -22,17 +21,16 @@
                 {% endwith %}
 
                 <div class="text-center">
-                    <h2>User Authentication</h2>
+                    <h2>Admin Authentication</h2>
                     <h5 class="text-info">{{ text }}</h5>
                 </div>
 
                 <div class="form-group mb-3">
-                    {{ form.email(class_="form-control",placeholder="Email")}}
+                    {{ form.username(class_="form-control",placeholder="AdminName")}}
                 </div>
-                {% for error in form.email.errors %}
+                {% for error in form.username.errors %}
                     <div class="alert alert-warning alert-dismissible fade show" role="alert">
                         {{ error }}
-                        <button type="button" class="btn btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 {% endfor%}
                 <div class="form-group mb-3">
@@ -48,16 +46,6 @@
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-block btn-info mb-3"> {{ btn_action }} </button>
                     </div>
-
-                    <p>
-                        {% if request.path != '/register' %}
-                        New here?
-                        <a href="{{ url_for('register') }}">Create account</a>
-                        {% else %}
-                        Already have an account?
-                        <a href="{{ url_for('login') }}">Login</a>
-                        {% endif %}
-                    </p>
                 </div>
             </form>
         </div>

@@ -1,0 +1,17 @@
+{% extends 'admbase.html' %}
+
+{% block title %}
+    Update article
+{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h1>Update article</h1>
+        <form method="post">
+            <input type="text" name="title" id="title" value="{{ article.title}}" class="form-control"></br>
+            <textarea name="intro" id="intro" class="form-control">{{ article.intro }}</textarea></br>
+            <textarea name="text" id="text" class="form-control">{{ article.text }}</textarea></br>
+            <input type="submit" class="btn btn-warning" value="Update">
+        </form>
+    </div>
+{% endblock %}

@@ -1,12 +1,18 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField
+from wtforms import StringField, PasswordField, EmailField
 from wtforms.validators import InputRequired, Length, Regexp, Email, EqualTo, ValidationError
+from wtforms_sqlalchemy.fields import QuerySelectField
 
-from .models import User
+from users.models import User, UserRole
 from extention import db
 
 
-class RegisterForm(FlaskForm):
+def get_role_names():
+    return db.session.query(UserRole).filter_by(is_active=True)
+
+
+class AdminRegisterForm(FlaskForm):
+
     username = StringField(
         validators=[
             InputRequired(),
@@ -14,7 +20,9 @@ class RegisterForm(FlaskForm):
             Regexp('^[A-Za-z][A-Za-z0-9_.]*$',0,
                 'Usernames must have only letters, ' 'numbers, dots or underscores',),
         ])
-    email = StringField(validators=[InputRequired(), Email(), Length(min=5, max=100)])
+    email = EmailField(validators=[InputRequired(), Email(), Length(min=5, max=100)])
+    rolename = QuerySelectField(query_factory=get_role_names, allow_blank=True,
+                                validators=[InputRequired()], blank_text='Select user role...')
     passwd = PasswordField(validators=[InputRequired(), Length(min=1, max=100)])
     passwd_confirm = PasswordField(
         validators=[
@@ -25,16 +33,16 @@ class RegisterForm(FlaskForm):
     )
 
     def validate_email(self, email):
-        if db.session.query(User).filter_by(email=email.data).first(): #User.query.filter_by(email=email.data).first():
+        if db.session.query(User).filter_by(email=email.data).first():
             raise ValidationError('Email already registered!')
 
     def validate_username(self, username):
-        if db.session.query(User).filter_by(username=username.data).first(): #User.query.filter_by(username=username.data).first():
+        if db.session.query(User).filter_by(username=username.data).first():
             raise ValidationError('The username already exist!')
 
 
-class LoginForm(FlaskForm):
-    email = StringField(validators=[InputRequired(), Email(), Length(min=5, max=100)])
+class AdminLoginForm(FlaskForm):
+    username = StringField(validators=[InputRequired(), Length(min=1, max=100)])
     passwd = PasswordField(validators=[InputRequired(), Length(min=1, max=100)])
 
 

@@ -4,8 +4,8 @@ from sqlalchemy.exc import InvalidRequestError, IntegrityError, DataError, Inter
 from werkzeug.routing import BuildError
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from .models import User
-from .forms import login_form, register_form
+from .models import User, UserRole
+from .forms import LoginForm, RegisterForm
 from extention import db
 
 
@@ -14,21 +14,16 @@ login_manager = LoginManager(users)
 login_manager.session_protection = 'strong'
 
 
-# @login_manager.user_loader
-# def load_user(user_id):
-#     return db.session.query(User).get(int(user_id)) #User.query.get(int(user_id))
-
-
 @users.route('/register', methods=['GET', 'POST'])
 def register():
-    form = register_form()
+    form = RegisterForm()
     if form.validate_on_submit():
         try:
             email = form.email.data
             passwd = form.passwd.data
             username = form.username.data
-
-            new_user = User(username=username, email=email, passwd=generate_password_hash(passwd))
+            role_id = db.session.query(UserRole.id).filter_by(rolename='Guest') if True else None
+            new_user = User(username=username, email=email, passwd=generate_password_hash(passwd), role_id=role_id)
 
             db.session.add(new_user)
             db.session.commit()
@@ -58,10 +53,10 @@ def register():
 
 @users.route('/login', methods=['GET', 'POST'])
 def login():
-    form = login_form()
+    form = LoginForm()
     if form.validate_on_submit():
         try:
-            user = db.session.query(User).filter_by(email=form.email.data).first() #User.query.filter_by(email=form.email.data).first()
+            user = db.session.query(User).filter_by(email=form.email.data).first()
             if user is None:
                 flash('No user found.', 'danger')
             else:
@@ -75,8 +70,13 @@ def login():
     return render_template('login.html', form=form, text='Login', title='Login', btn_action='Login')
 
 
-@users.route("/logout")
+@users.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('.login'))
+
+
+@users.route('/password_forgot')
+def passwd_forgot():
+    pass

@@ -1,0 +1,27 @@
+{% extends 'admbase.html' %}
+
+{% block title %}
+    {{ title }}
+{% endblock %}
+{% block body %}
+<div class="container mt-5">
+           <div class="alert alert-info">
+             <h2>{{ article.title }}</h2>
+             <h4>{{ article.intro }}</h4>
+             <p>{{ article.text }}</p>
+             {% if article.dlm > article.creation_date %}
+                <p><strong>Date of publish: {{ article.creation_date.date() }}</strong></p>
+                <p><strong>Date of update: {{ article.dlm.date() }}</strong></p>
+             {% else %}
+                <p><strong>Date of publish: {{ article.creation_date.date() }}</strong></p>
+             {% endif %}
+             <a href="/admin/dashboard" class="btn btn-info">Back</a>
+             {% if article.user_id == current_user.id %}
+                <a href="/admin/dashboard/article/{{ article.id }}/update" class="btn btn-warning">Update</a>
+                <a href="/admin/dashboard/article/{{ article.id }}/delete" class="btn btn-danger">Delete</a>
+             {% endif %}
+
+           </div>
+    </div>
+
+{% endblock %}
