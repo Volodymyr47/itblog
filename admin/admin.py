@@ -85,7 +85,7 @@ def user_register():
             db.session.rollback()
             flash(f'An error occurred ! {be}', 'danger')
     return render_template('dashboard.html', form=form, errors=form.errors)
-    # return redirect(url_for('.dashboard'))
+
 
 @admin.route('/dashboard', methods=['POST', 'GET'])
 @login_required
@@ -125,7 +125,7 @@ def article_update(id):
         except Exception as e:
             return f'An error occurred while updating the article: {str(e)}'
     else:
-        return render_template('article_update.html', article=article)
+        return render_template('art_update.html', article=article)
 
 
 @admin.route('/dashboard/article/<int:id>/delete')
@@ -138,5 +138,5 @@ def article_delete(id):
         db.session.delete(article)
         db.session.commit()
         return redirect('/admin/dashboard')
-    except:
-        return "Error was found on delete apticle"
+    except Exception as err:
+        return f'Error was found on delete apticle: {err}'

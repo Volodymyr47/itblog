@@ -5,7 +5,7 @@ from werkzeug.exceptions import abort
 
 from app import app
 from extention import db
-from models import Article # User,
+from models import Article
 
 
 @app.route('/')
@@ -41,7 +41,6 @@ def add_article():
 @app.route('/posts')
 def posts():
     articles = db.session.query(Article).order_by(Article.dlm.desc()).all()
-        # Article().query.order_by(Article.dlm.desc()).all()
     return render_template('posts.html', articles=articles)
 
 
@@ -49,7 +48,6 @@ def posts():
 def article_detail(id):
     if id:
         article = db.session.query(Article).get(id)
-
         return render_template('article_detail.html', article=article)
     else:
         return f'Post {id} does not exist'

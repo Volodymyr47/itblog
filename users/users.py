@@ -30,24 +30,24 @@ def register():
             flash('Account successfully created', 'success')
             return redirect(url_for('.login'))
 
-        except InvalidRequestError:
+        except InvalidRequestError as ire:
             db.session.rollback()
-            flash('Something is wrong!', 'danger')
-        except IntegrityError:
+            flash(f'Something is wrong! {ire}', 'danger')
+        except IntegrityError as ige:
             db.session.rollback()
-            flash('User already exists!.', 'warning')
-        except DataError:
+            flash(f'User already exists!. {ige}', 'warning')
+        except DataError as de:
             db.session.rollback()
-            flash('Invalid Entry', 'warning')
-        except InterfaceError:
+            flash(f'Invalid Entry. {de}', 'warning')
+        except InterfaceError as ife:
             db.session.rollback()
-            flash('Error connecting to the database', 'danger')
-        except DatabaseError:
+            flash(f'Error connecting to the database. {ife}', 'danger')
+        except DatabaseError as dbe:
             db.session.rollback()
-            flash('Error connecting to the database', 'danger')
-        except BuildError:
+            flash(f'Error connecting to the database. {dbe}', 'danger')
+        except BuildError as be:
             db.session.rollback()
-            flash('An error occurred !', 'danger')
+            flash(f'An error occurred! {be}', 'danger')
     return render_template('register.html',form=form,text='Create account',title='Register',btn_action='Register account')
 
 
