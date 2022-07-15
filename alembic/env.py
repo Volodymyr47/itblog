@@ -18,15 +18,29 @@ if config.config_file_name is not None:
 #for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from users import models as user
-import models as article
 
-target_metadata = [user.Base.metadata, article.Base.metadata]
+from users.models import User, UserRole
+from models import Article, Status
+from extention import Base
+
+target_metadata = [Base.metadata]
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+
+IGNORE_TABLES = ['sqlite_stat1', 'sqlite_stat4']
+
+def include_object(object, name, type_, reflected, compare_to):
+    """
+    Should you include this table or not?
+    """
+    if type_ == 'table' and name in IGNORE_TABLES:
+        return False
+    if type_ == "table" and reflected and compare_to is None:
+        return False
+    return True
 
 
 def run_migrations_offline() -> None:
@@ -47,6 +61,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        include_object=include_object,
     )
 
     with context.begin_transaction():

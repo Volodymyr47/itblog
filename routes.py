@@ -32,8 +32,8 @@ def add_article():
             db.session.add(article)
             db.session.commit()
             return redirect('/posts')
-        except Exception as e:
-            return f'An error occurred while adding an article: {str(e)}'
+        except Exception as err:
+            return f'An error occurred while adding an article: {str(err)}'
     else:
         return render_template('add-article.html')
 

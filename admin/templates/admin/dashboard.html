@@ -13,18 +13,19 @@
     #tr_users, #tr_roles {
         cursor: default
     }
-
-    .users {
-        height: 15em; overflow: auto
+    table>tr {
+        height: 5em;
+        overflow: auto
     }
 
 </style>
+
 <div class="container">
-    <div class="modal fade bd-example-modal-sm" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
+    <div class="modal fade user" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-sm">
         <div class="modal-content">
           <form method="POST" class="card-body" action="{{ url_for('admin.user_register') }}">
-                {{ form.csrf_token }}
+                {{ reg_form.csrf_token }}
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
@@ -37,43 +38,86 @@
 
                 <h3 class="m-3 text-center">Register new user</h3>
                 <div class="form-group mb-3">
-                    {{ form.username(class_="form-control", placeholder="Username")}}
+                    {{ reg_form.username(class_="form-control", placeholder="Username")}}
                 </div>
-                    {% for error in form.username.errors %}
+                    {% for error in reg_form.username.errors %}
                         <div class="alert alert-warning alert-dismissible fade show" role="alert">
                             {{ error }}
                         </div>
                     {% endfor%}
                 <div class="form-group mb-3">
-                    {{ form.email(class_="form-control",placeholder="Email")}}
+                    {{ reg_form.email(class_="form-control",placeholder="Email")}}
                 </div>
-                {% for error in form.email.errors %}
+                    {% for error in reg_form.email.errors %}
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            {{ error }}
+                        </div>
+                    {% endfor%}
+
+                <div class="form-group mb-3">
+                    {{ reg_form.rolename(class_="form-control") }}
+                </div>
+                {% for error in reg_form.rolename.errors %}
                     <div class="alert alert-warning alert-dismissible fade show" role="alert">
                         {{ error }}
                     </div>
                 {% endfor%}
 
                 <div class="form-group mb-3">
-                    {{ form.rolename(class_="form-control") }}
+                    {{ reg_form.passwd(class_="form-control", placeholder="Password")}}
                 </div>
-                {% for error in form.rolename.errors %}
-                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                        {{ error }}
-                    </div>
-                {% endfor%}
-
-                <div class="form-group mb-3">
-                    {{ form.passwd(class_="form-control", placeholder="Password")}}
-                </div>
-                {% for error in form.passwd.errors %}
+                {% for error in reg_form.passwd.errors %}
                     <div class="alert alert-warning alert-dismissible fade show" role="alert">
                         {{ error }}
                     </div>
                 {% endfor%}
                     <div class="form-group mb-3">
-                        {{ form.passwd_confirm(class_="form-control", placeholder="Confirm Password")}}
+                        {{ reg_form.passwd_confirm(class_="form-control", placeholder="Confirm Password")}}
                     </div>
-                {% for error in form.passwd_confirm.errors %}
+                {% for error in reg_form.passwd_confirm.errors %}
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        {{ error }}
+                    </div>
+                {% endfor%}
+                 <div class="modal-footer">
+                    <input type="submit" class="btn btn-info" value="Send">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                 </div>
+          </form>
+        </div>
+      </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="modal fade role" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+          <form method="POST" class="card-body" action="{{ url_for('admin.add_role') }}">
+                {{ role_form.csrf_token }}
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{category}} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <h3 class="m-3 text-center">Add new role</h3>
+                <div class="form-group mb-3">
+                    {{ role_form.rolename(class_="form-control", placeholder="Roles name") }}
+                </div>
+                    {% for error in role_form.rolename.errors %}
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            {{ error }}
+                        </div>
+                    {% endfor%}
+                <div class="form-group mb-3">
+                    {{ role_form.status(class_="form-control") }}
+                </div>
+                {% for error in role_form.status.errors %}
                     <div class="alert alert-warning alert-dismissible fade show" role="alert">
                         {{ error }}
                     </div>
@@ -92,21 +136,21 @@
 <div class="mt-3 ml-5 mr-5 mb-2">
     {% if users|length > 0 %}
        <div class="alert alert-info">
-           <div class="users">
-           <table class="table table-hover table-light scrollingTable">
-               <div class="display-4 d-inline">Users</div>
-               <button type="button" class="btn btn-info mb-4 ml-3" data-toggle="modal" data-target=".bd-example-modal-sm">Add new user</button>
 
+           <table id="users" class="table table-hover table-light scrollingTable">
+               <div class="display-4 d-inline">Users</div>
+               <button type="button" class="btn btn-info mb-4 ml-3" data-toggle="modal" data-target=".user">Add user</button>
                <thead class="thead-light">
                 <tr id="th_users">
                     <th>ID</th>
                     <th>Name</th>
                     <th>Role</th>
                     <th>Email</th>
-                    <th>Is_Active</th>
+                    <th>Status</th>
                     <th>RegisterDate</th>
                     <th>DLM</th>
                     <th>ULM</th>
+                    <th></th>
                 </tr>
                </thead>
                <tbody>
@@ -116,15 +160,16 @@
                         <td>{{ user.username }}</td>
                         <td>{{ user.role_id }}</td>
                         <td>{{ user.email }}</td>
-                        <td><input type="checkbox" name="isActive">{{ isActive }}</td>
+                         <td>{{ user.status }}</td>
                         <td>{{ user.register_date }}</td>
                         <td>{{ user.dlm }}</td>
                         <td>{{ user.ulm }}</td>
+                        <td><button class="btn btn-danger">Edit</button></td>
                      </tr>
                  {% endfor %}
                 </tbody>
            </table>
-               </div>
+
        </div>
     {% endif %}
 </div>
@@ -134,25 +179,31 @@
     {% if roles|length > 0 %}
        <div class="alert alert-info">
            <table id="roles" class="table table-hover table-light">
-               <p class="display-4">Roles</p>
+               <p class="display-4 d-inline">Roles</p>
+               <button type="button" class="btn btn-info mb-4 ml-3" data-toggle="modal" data-target=".role">Add role</button>
+
                <thead class="thead-light">
                 <tr id="th_roles">
                     <th>ID</th>
                     <th>RoleName</th>
-                    <th>Is_Active</th>
+                    <th>Status</th>
                     <th>DLM</th>
                     <th>ULM</th>
+                    <th> </th>
                 </tr>
                </thead>
                <tbody>
                 {% for role in roles %}
+                    <div class="inline-d">
                      <tr id="tr_roles">
                         <td>{{ role.id }}</td>
                         <td>{{ role.rolename }}</td>
-                        <td>{{ role.is_active }}</td>
+                        <td>{{ role.status }}</td>
                         <td>{{ role.dlm }}</td>
                         <td>{{ role.ulm }}</td>
+                        <td><button class="btn btn-danger">Edit</button></td>
                      </tr>
+                    </div>
                  {% endfor %}
                 </tbody>
            </table>

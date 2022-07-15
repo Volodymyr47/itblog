@@ -12,7 +12,7 @@ class Article(Base):
     title = Column(String(100), nullable=False)
     intro = Column(String(300), nullable=False)
     text = Column(Text, nullable=False)
-    # status = Column(Integer, ForeignKey('status.code'), nullable=False)
+    status = Column(Integer, ForeignKey('status.code'), nullable=False)
     dlm = Column(DateTime, default=datetime.utcnow)
     creation_date = Column(DateTime, default=datetime.utcnow)
 
@@ -26,8 +26,9 @@ class Status(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     code = Column(Integer)
     name = Column(String(30),nullable=False)
-    dlm = Column(DateTime, default=datetime.utcnow())
+    dlm = Column(DateTime, default=datetime.utcnow)
     ulm = Column(Integer, ForeignKey('user.id'), nullable=False)
 
     def __str__(self):
-        return self.name
+        return f'{self.code} - {self.name}'
+

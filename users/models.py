@@ -13,7 +13,7 @@ class User(UserMixin, Base):
     username = Column(String(100), nullable=False, unique=True)
     passwd = Column(String(254), nullable=False)
     email = Column(String(100), nullable=False, unique=True)
-    is_active = Column(Boolean, default=True)
+    status = Column(Integer, ForeignKey('status.code'), default=1)
     register_date = Column(DateTime, default=datetime.utcnow)
     dlm = Column(DateTime, default=datetime.utcnow)
     ulm = Column(Integer, ForeignKey('user.id'))
@@ -30,7 +30,7 @@ class UserRole(Base):
     rolename = Column(String(100), nullable=False, unique=True)
     ulm = Column(Integer, ForeignKey('user.id'))
     dlm = Column(DateTime, default=datetime.utcnow())
-    is_active = Column(Boolean, default=True)
+    status = Column(Integer, ForeignKey('status.code'))
 
     def __repr__(self):
         return self.rolename
@@ -46,14 +46,11 @@ class UserRole(Base):
             new_role = UserRole(rolename=rolename, ulm=curr_user)
             return new_role
 
-    def deactive_role(self, rolename, is_active):
-        active = db.session.query(UserRole).filter_by(rolename=rolename, is_active = True)
-        if active:
-            is_active = False
-            return is_active
-
-    def active_role(self, rolename, is_active):
-        active = db.session.query(UserRole).filter_by(rolename=rolename, is_active=False)
-        if active:
-            is_active = True
-            return is_active
+    def change_roles_status(self, rolename, status):
+        roles = db.session.query(UserRole).filter_by(rolename=rolename, status=2)
+        if roles:
+            roles.status = status
+            try:
+                db.session.commit()
+            except Exception as err:
+                raise f'Error changing roles status occurred: {err}'

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import Blueprint, flash, redirect, url_for, g
+from flask import Blueprint, flash, redirect, url_for
 from flask_login import login_user, logout_user, LoginManager, login_required, login_fresh, current_user
 from sqlalchemy.exc import InvalidRequestError, IntegrityError, DataError, InterfaceError, DatabaseError
 from werkzeug.exceptions import abort
@@ -8,7 +8,7 @@ from werkzeug.routing import BuildError
 from flask import render_template, request
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from .forms import AdminLoginForm, AdminRegisterForm, AddNewRole
+from .forms import AdminLoginForm, AdminRegisterForm
 from extention import db
 from users.models import User, UserRole
 from models import Article
@@ -39,26 +39,6 @@ def admin_login():
     return render_template('admin_login.html', form=form, title='Administrative authentification', btn_action='Login')
 
 
-####################################################
-
-@admin.route('/dashboard', methods=['POST', 'GET'])
-@login_required
-def dashboard():
-    reg_form = AdminRegisterForm()
-    role_form = AddNewRole()
-    users = db.session.query(User).order_by(User.id.asc()).all()
-    roles = db.session.query(UserRole).order_by(UserRole.id.asc()).all()
-    articles = db.session.query(Article).order_by(Article.dlm.desc()).all()
-
-    # print(col1)
-    return render_template('dashboard.html', reg_form=reg_form, role_form=role_form,
-                           users=users, roles=roles, articles=articles)
-
-
-####################################################
-
-# Users
-
 @admin.route('/logout')
 @login_required
 def admin_logout():
@@ -69,13 +49,13 @@ def admin_logout():
 @admin.route('/user_register', methods=['POST', 'GET'])
 @login_required
 def user_register():
-    reg_form = AdminRegisterForm()
-    if reg_form.validate_on_submit():
+    form = AdminRegisterForm()
+    if form.validate_on_submit():
         try:
-            email = reg_form.email.data
-            rolename = reg_form.rolename.data
-            passwd = reg_form.passwd.data
-            username = reg_form.username.data
+            email = form.email.data
+            rolename = form.rolename.data
+            passwd = form.passwd.data
+            username = form.username.data
             role_id = db.session.query(UserRole.id).filter_by(rolename=str(rolename)) if True else None
 
             new_user = User(username=username, email=email, passwd=generate_password_hash(passwd),
@@ -104,10 +84,19 @@ def user_register():
         except BuildError as be:
             db.session.rollback()
             flash(f'An error occurred ! {be}', 'danger')
-    return render_template('dashboard.html', reg_form=reg_form, errors=reg_form.errors)
+    return render_template('dashboard.html', form=form, errors=form.errors)
 
 
-# Articles
+@admin.route('/dashboard', methods=['POST', 'GET'])
+@login_required
+def dashboard():
+    form = AdminRegisterForm()
+    users = db.session.query(User).order_by(User.username.asc()).all()
+    roles = db.session.query(UserRole).order_by(UserRole.rolename.asc()).all()
+    articles = db.session.query(Article).order_by(Article.dlm.desc()).all()
+
+    return render_template('dashboard.html', form=form, users=users, roles=roles, articles=articles)
+
 
 @admin.route('/dashboard/article/<int:id>', methods=['POST','GET'])
 @login_required
@@ -151,26 +140,3 @@ def article_delete(id):
         return redirect('/admin/dashboard')
     except Exception as err:
         return f'Error was found on delete apticle: {err}'
-
-
-# Roles
-
-@admin.route('/add_role', methods=['POST', 'GET'])
-@login_required
-def add_role():
-    role_form = AddNewRole()
-    reg_form = AdminRegisterForm()
-    if role_form.validate_on_submit():
-        rolename = role_form.rolename.data
-        status = role_form.status.data
-        ulm = current_user.id
-
-        newrole = UserRole(rolename=rolename, ulm=ulm, status=status.code)
-        try:
-            db.session.add(newrole)
-            db.session.commit()
-            return redirect(url_for('.dashboard'))
-        except BaseException as err:
-            db.session.rollback()
-            flash (f'Error with adding new role occurred. {err}', 'danger')
-    return render_template('dashboard.html', role_form=role_form, reg_form=reg_form, errors=role_form.errors)
