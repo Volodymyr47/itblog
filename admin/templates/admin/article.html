@@ -6,20 +6,25 @@
 {% block body %}
 <div class="container mt-5">
            <div class="alert alert-info">
-             <h2>{{ article.title }}</h2>
-             <h4>{{ article.intro }}</h4>
-             <p>{{ article.text }}</p>
-             {% if article.dlm > article.creation_date %}
-                <p><strong>Date of publish: {{ article.creation_date.date() }}</strong></p>
-                <p><strong>Date of update: {{ article.dlm.date() }}</strong></p>
+             <h2>{{ specific_article.title }}</h2>
+             <h4>{{ specific_article.intro }}</h4>
+             <p>{{ specific_article.text }}</p>
+             {% if specific_article.dlm > specific_article.creation_date %}
+                <p><strong>Date of publish: {{ specific_article.creation_date.date() }}</strong></p>
+                <p><strong>Date of update: {{ specific_article.dlm.date() }}</strong></p>
              {% else %}
-                <p><strong>Date of publish: {{ article.creation_date.date() }}</strong></p>
+                <p><strong>Date of publish: {{ specific_article.creation_date.date() }}</strong></p>
              {% endif %}
+             {% if specific_article.status == 2 %}
+                <p class="text-success font-weight-bold">Article status: {{ status_code_name }}</p>
+             {% else %}
+                <p class="text-danger font-weight-bold">Article status: {{ status_code_name }}</p>
+             {% endif %}
+
              <a href="/admin/dashboard" class="btn btn-info">Back</a>
-             {% if article.user_id == current_user.id %}
-                <a href="/admin/dashboard/article/{{ article.id }}/update" class="btn btn-warning">Update</a>
-                <a href="/admin/dashboard/article/{{ article.id }}/delete" class="btn btn-danger">Delete</a>
-             {% endif %}
+
+            <a href="/admin/dashboard/article/{{ specific_article.id }}/update" class="btn btn-warning">Update</a>
+            <a href="/admin/dashboard/article/{{ specific_article.id }}/delete" class="btn btn-danger">Delete</a>
 
            </div>
     </div>

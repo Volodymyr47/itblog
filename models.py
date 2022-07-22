@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text
 
-from extention import Base
+from extention import Base, db
 
 
 class Article(Base):
@@ -12,7 +12,7 @@ class Article(Base):
     title = Column(String(100), nullable=False)
     intro = Column(String(300), nullable=False)
     text = Column(Text, nullable=False)
-    status = Column(Integer, ForeignKey('status.code'), nullable=False)
+    status = Column(Integer, ForeignKey('status.code'), nullable=False, default=1)
     dlm = Column(DateTime, default=datetime.utcnow)
     creation_date = Column(DateTime, default=datetime.utcnow)
 
@@ -32,3 +32,18 @@ class Status(Base):
     def __str__(self):
         return f'{self.code} - {self.name}'
 
+    def __repr__(self):
+        return f'{self.code} - {self.name}'
+
+    def get_name(self, id):
+        if id:
+            name = db.session.query(Status).filter_by(code=id).first()
+            return name.name
+        print('get_name(): ID is null')
+
+    def get_code(self, id):
+        if id:
+            data = db.session.query(Status).filter_by(id=id).first()
+            return data.code
+        else:
+            print('get_code(): ID is null')

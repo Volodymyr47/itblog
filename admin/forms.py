@@ -64,25 +64,12 @@ class AddNewRole(FlaskForm):
                               validators=[InputRequired()])
 
 
+class ArticleStatusUpdate(FlaskForm):
 
-# class NewRoleForm(FlaskForm):
-#
-#     rolename = StringField(validators=[InputRequired, Length(min=3, max=100,message='Please provide a valid name'),
-#                                        Regexp(['^[A-Za-z][A-Za-z0-9]*$',0,
-#                                                'sernames must have only letters, numbers'])])
-#     is_active =
+    status = QuerySelectField(query_factory=get_status, allow_blank=True,
+                              validators=[InputRequired()])
 
-# class passwd_forgot(FlaskForm):
-#     email = StringField(validators=[InputRequired(), Email(), Length(min=5, max=100)])
-#
-#     def send_passwd_forgot(self, email):
-#         sender = user_app.mail
-#         try:
-#             user_app.mail.send_message('Mail Reset', email,
-#                              "Please, go to the link ro reset your password!. Don't replay to this message",
-#                              sender, user_app.datetime.utcnow())
-#             return 'Message sended successful'
-#         except Exception as err:
-#             return f'Sending message error: {err}'
+
+
 
 

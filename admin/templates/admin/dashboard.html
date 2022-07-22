@@ -220,6 +220,7 @@
                 <tr id="th_articles">
                    <th>Title</th>
                    <th>Intro</th>
+                   <th>Status</th>
                    <th>DLM</th>
                 </tr>
                </thead>
@@ -228,6 +229,7 @@
                      <tr id="tr_articles" onclick="window.location='/admin/dashboard/article/{{ article.id }}'">
                         <td>{{ article.title }}</td>
                         <td>{{ article.intro }}</td>
+                        <td>{{ article.status }}</td>
                         <td>
                             {% if article.dlm > article.creation_date %}
                                 {{ article.dlm}}

@@ -52,6 +52,10 @@
                         {% if request.path != '/users/register' %}
                         New here?
                         <a href="{{ url_for('users.register') }}">Create account</a>
+                        <p>
+                            Forgot password?
+                            <a href="{{ url_for('users.passwd_forgot') }}">Password recover</a>
+                        </p>
                         {% else %}
                         Already have an account?
                         <a href="{{ url_for('users.login') }}">Login</a>

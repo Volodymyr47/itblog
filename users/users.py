@@ -1,12 +1,16 @@
+from datetime import datetime
+from pytz import timezone
+
 from flask import Blueprint, render_template, redirect, url_for, flash
 from flask_login import current_user, login_user, login_required, logout_user, LoginManager
 from sqlalchemy.exc import InvalidRequestError, IntegrityError, DataError, InterfaceError, DatabaseError
 from werkzeug.routing import BuildError
 from werkzeug.security import check_password_hash, generate_password_hash
+from flask_mail import Message
 
 from .models import User, UserRole
-from .forms import LoginForm, RegisterForm
-from extention import db
+from .forms import LoginForm, RegisterForm, PasswdForgotForm, PasswdRecover
+from extention import db, mail
 
 
 users = Blueprint('users', __name__, template_folder='templates/users', static_folder='/static')
@@ -77,6 +81,37 @@ def logout():
     return redirect(url_for('.login'))
 
 
-@users.route('/password_forgot')
+@users.route('/password_forgot', methods=['POST', 'GET'])
 def passwd_forgot():
-    pass
+    passfg_form = PasswdForgotForm()
+
+    if passfg_form.validate_on_submit():
+        user = db.session.query(User).filter_by(email=passfg_form.email.data).first()
+        if user:
+            msg = Message(subject='Password forgotten', sender='mysimpleblog.notifier@gmail.com',
+                          recipients=[str(passfg_form.email.data),],
+                          html= f'Please open the link to change your password http://127.0.0.1:5000/users/password_recover/{user.id}')
+            mail.send(msg)
+            flash(f'Email sent to {passfg_form.email.data} successful', 'success')
+            return render_template('password_forgot.html', passfg_form=passfg_form)
+        else:
+            flash(f'Email {passfg_form.email.data} not found', 'danger')
+        return render_template('password_forgot.html', passfg_form=passfg_form)
+    return render_template('password_forgot.html', passfg_form=passfg_form)
+
+@users.route('/password_recover/<int:id>', methods=['POST', 'GET'])
+def passwd_recover(id):
+    passrec_form = PasswdRecover()
+    if passrec_form.validate_on_submit():
+        try:
+            user = db.session.query(User).filter_by(id=id).first()
+            user.passwd = generate_password_hash(passrec_form.passwd.data)
+            user.dlm = datetime.now(timezone('Europe/Kiev'))
+            user.ulm = id
+            print(user.passwd)
+            db.session.commit()
+            flash('Password changed successful', 'success')
+        except BaseException as err:
+            db.session.rollback()
+            flash(f'Password changing error found. {err}')
+    return render_template('password_recover.html', passrec_form=passrec_form)

@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from flask import Blueprint, flash, redirect, url_for, g
 from flask_login import login_user, logout_user, LoginManager, login_required, login_fresh, current_user
 from sqlalchemy.exc import InvalidRequestError, IntegrityError, DataError, InterfaceError, DatabaseError
@@ -8,10 +7,10 @@ from werkzeug.routing import BuildError
 from flask import render_template, request
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from .forms import AdminLoginForm, AdminRegisterForm, AddNewRole
+from .forms import AdminLoginForm, AdminRegisterForm, AddNewRole, ArticleStatusUpdate
 from extention import db
 from users.models import User, UserRole
-from models import Article
+from models import Article, Status
 
 
 admin = Blueprint('admin', __name__, template_folder='templates/admin', static_folder='static')
@@ -113,8 +112,11 @@ def user_register():
 @login_required
 def article(id):
     if id:
-        art = db.session.query(Article).get(id)
-        return render_template('article.html', article=art, id=id)
+        _status = Status()
+        specific_article = db.session.query(Article).get(id)
+        status_code_name = str(specific_article.status) + ' - ' + _status.get_name(id=specific_article.status)
+        return render_template('article.html', specific_article=specific_article,
+                               status_code_name=status_code_name, id=id)
     else:
         return f'Post {id} does not exist'
 
@@ -123,20 +125,32 @@ def article(id):
 @login_required
 def article_update(id):
     article = db.session.query(Article).get(id)
+    status_form = ArticleStatusUpdate()
+    _status = Status()
+    status_code_name = str(article.status) + ' - ' + _status.get_name(id=article.status)
+
+    status_form.status.blank_text = status_code_name
+
     if request.method == 'POST':
         article.title = request.form['title']
         article.intro = request.form['intro']
         article.text = request.form['text']
+        if request.form['status'] != '__None':
+            print(request.form['status'])
+            article.status = _status.get_code(id=request.form['status'])
+        print(request.form['status'])
         article.dlm = datetime.utcnow()
-        article = Article(title=article.title, intro=article.intro, text=article.text, dlm=article.dlm)
+
+        article = Article(title=article.title, intro=article.intro, text=article.text,
+                          status=article.status, dlm=article.dlm)
 
         try:
             db.session.commit()
             return redirect('/admin/dashboard')
         except Exception as e:
-            return f'An error occurred while updating the article: {str(e)}'
+            return flash(f'An error has occurred while updating the article: {str(e)}', 'danger')
     else:
-        return render_template('art_update.html', article=article)
+        return render_template('art_update.html', article=article, status_form=status_form)
 
 
 @admin.route('/dashboard/article/<int:id>/delete')
@@ -150,11 +164,10 @@ def article_delete(id):
         db.session.commit()
         return redirect('/admin/dashboard')
     except Exception as err:
-        return f'Error was found on delete apticle: {err}'
+        return flash(f'Error was found on delete apticle: {err}', 'danger')
 
 
 # Roles
-
 @admin.route('/add_role', methods=['POST', 'GET'])
 @login_required
 def add_role():
