@@ -1,11 +1,12 @@
 from datetime import datetime
-from flask import render_template, request, redirect
+from flask import render_template, request, redirect, flash, url_for
 from flask_login import current_user, login_required
 from werkzeug.exceptions import abort
 
 from app import app
 from extention import db
-from models import Article
+from models import Article, Comment
+from forms import NewComment
 
 
 @app.route('/')
@@ -46,9 +47,16 @@ def posts():
 
 @app.route('/posts/<int:id>')
 def article_detail(id):
+    '''
+    Show article detail:
+    '''
+    comment_form = NewComment()
+    current_comments_count = db.session.query(Comment).filter_by(article_id=id).count()
+    comments = db.session.query(Comment).filter_by(article_id=id).order_by(Comment.id)
     if id:
         article = db.session.query(Article).get(id)
-        return render_template('article_detail.html', article=article)
+        return render_template('article_detail.html', article=article, comment_form=comment_form,
+                               current_comments_count=current_comments_count, comments=comments)
     else:
         return f'Post {id} does not exist'
 
@@ -56,20 +64,27 @@ def article_detail(id):
 @app.route('/posts/<int:id>/delete')
 @login_required
 def article_delete(id):
-    article = db.session.get(Article, id) #query(Article).get(id) # Article().query.get_or_404(id)
-    if article is None:
-        abort(404)
-    try:
-        db.session.delete(article)
-        db.session.commit()
-        return redirect('/posts')
-    except:
-        return "Error was found on delete apticle"
+    '''
+    Delete current article
+    '''
+    article = db.session.get(Article, id)
+    if article.id:
+        if article is None:
+            abort(404)
+        try:
+            db.session.delete(article)
+            db.session.commit()
+            return redirect('/posts')
+        except:
+            return "Error was found on delete article"
 
 
 @app.route('/posts/<int:id>/update', methods=['POST', 'GET'])
 @login_required
 def article_update(id):
+    '''
+    Update current article
+    '''
     article = db.session.query(Article).get(id)
     if request.method == 'POST':
         article.title = request.form['title']
@@ -87,6 +102,37 @@ def article_update(id):
         return render_template('article_update.html', article=article)
 
 
-@app.route('/password_forgot')
-def password_forgot():
-    return render_template('password_forgot.html')
+@app.route('/posts/<int:id>/comment', methods=['POST'])
+@login_required
+def add_comment(id):
+    '''
+    Add new comment
+    '''
+    article = db.session.get(Article, id)
+    comment_form = NewComment()
+    comment = Comment()
+    parent = 0
+    level = -1
+
+    comments = db.session.query(Comment).filter_by(article_id=id).order_by(Comment.dlm.desc())
+
+    if comment_form.validate_on_submit():
+
+        if comment_form.id.data is not None:
+            parent = comment_form.id.data
+
+        new_level = db.session.query(Comment.level).filter_by(article_id=id, id=parent).first()
+        if new_level is None:
+            new_level = level
+        else:
+            new_level = new_level[0]
+
+        flash(comment.add_comment(text=comment_form.comment_text.data, article_id=id, parent=parent,
+                                  level=new_level+1, ulm=current_user.id), 'success')
+        # flash('Comment has been added', 'success')
+        return redirect(url_for('article_detail',id=id))
+    else:
+        flash(comment_form.errors, 'danger')
+    current_comments_count = db.session.query(Comment).filter_by(article_id=id).count()
+    return render_template('article_detail.html', article=article, comment_form=comment_form,
+                           current_comments_count=current_comments_count,comments=comments)

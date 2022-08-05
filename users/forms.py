@@ -43,7 +43,6 @@ class PasswdForgotForm(FlaskForm):
 
 
 class PasswdRecover(FlaskForm):
-    # email = StringField(validators=[InputRequired(), Email(), Length(min=5, max=100)])
     passwd = PasswordField(validators=[InputRequired(), Length(min=1, max=100)])
     passwd_confirm = PasswordField(
         validators=[

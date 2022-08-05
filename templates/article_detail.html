@@ -10,17 +10,75 @@
              <h2>{{ article.title }}</h2>
              <p>{{ article.text }}</p>
              {% if article.dlm > article.creation_date %}
-                <p><strong>Date of publish: {{ article.creation_date.date() }}</strong></p>
-                <p><strong>Date of update: {{ article.dlm.date() }}</strong></p>
+                <p>Date of publish: {{ article.creation_date.date() }}</p>
+                <p>Date of update: {{ article.dlm.date() }}</p>
              {% else %}
-                <p><strong>Date of publish: {{ article.creation_date.date() }}</strong></p>
+                <p>Date of publish: {{ article.creation_date.date() }}</p>
              {% endif %}
              <a href="/posts" class="btn btn-info">Back</a>
              {% if article.user_id == current_user.id %}
                 <a href="/posts/{{ article.id }}/update" class="btn btn-warning">Update</a>
                 <a href="/posts/{{ article.id }}/delete" class="btn btn-danger">Delete</a>
              {% endif %}
-
            </div>
+
+            <div class="alert alert-light">
+                <h4>Comments</h4>
+                {% if current_comments_count == 0 %}
+                    <p class="font-weight-bold">No comments for the article</p>
+                {% else %}
+                    <p class="font-weight-bold">Comments: {{ current_comments_count }}</p>
+                {% endif %}
+                <div class="mb-5">
+
+
+                    <form method="post" action="{{ url_for('add_comment', id=article.id) }}">
+                        {{ comment_form.csrf_token }}
+
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{category}} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+                        <textarea class="form-control" name="comment_text" id="comment_text"
+                                  placeholder="Leave your comment"></textarea></br>
+                        <input type="submit" class="btn btn-outline-info" value="Add comment">
+                    </form>
+
+                    {% for comment in comments %}
+                    <div class="card mb-4 shadow-sm">
+                        <p>{{ comment.dlm.date() }}</p>
+                        <div class="text-dark">
+                            {{comment.text}}
+                            {% if current_user.is_authenticated %}
+                                <div class="container" id="answer-{{comment.id}}">
+                                   <form method="post" action="{{ url_for('add_comment', id=article.id) }}">
+                                       {{ comment_form.csrf_token }}
+                                        {% with messages = get_flashed_messages(with_categories=true) %}
+                                            {% if messages %}
+                                                {% for category, message in messages %}
+                                                    <div class="alert alert-{{category}} alert-dismissible fade show" role="alert">
+                                                        {{ message }}
+                                                    </div>
+                                                {% endfor %}
+                                            {% endif %}
+                                        {% endwith %}
+                                    <textarea class="form-control" name="comment_text"
+                                      placeholder="Your answer"></textarea></br>
+                                    <input type="text" hidden name="id" value="{{ comment.id }}" >
+                                    <input type="submit" class="btn btn-outline-info" value="Add answer">
+                                   </form>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                </div>
+            </div>
     </div>
 {% endblock %}

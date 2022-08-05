@@ -1,5 +1,5 @@
+from uuid import uuid4, uuid5, NAMESPACE_OID
 
-from werkzeug.security import check_password_hash, generate_password_hash
+print(str(uuid4())+str(5)+str(uuid4()))
 
-print(generate_password_hash('admin'),'sha256')
-
+# b7d55bf4-7057-5113-85c8-141871bf7635

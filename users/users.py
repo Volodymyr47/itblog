@@ -1,7 +1,7 @@
 from datetime import datetime
 from pytz import timezone
 
-from flask import Blueprint, render_template, redirect, url_for, flash
+from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import current_user, login_user, login_required, logout_user, LoginManager
 from sqlalchemy.exc import InvalidRequestError, IntegrityError, DataError, InterfaceError, DatabaseError
 from werkzeug.routing import BuildError
@@ -52,7 +52,8 @@ def register():
         except BuildError as be:
             db.session.rollback()
             flash(f'An error occurred! {be}', 'danger')
-    return render_template('register.html',form=form,text='Create account',title='Register',btn_action='Register account')
+    return render_template('register.html',form=form,text='Create account',
+                           title='Register',btn_action='Register account')
 
 
 @users.route('/login', methods=['GET', 'POST'])
@@ -84,20 +85,26 @@ def logout():
 @users.route('/password_forgot', methods=['POST', 'GET'])
 def passwd_forgot():
     passfg_form = PasswdForgotForm()
-
-    if passfg_form.validate_on_submit():
-        user = db.session.query(User).filter_by(email=passfg_form.email.data).first()
-        if user:
-            msg = Message(subject='Password forgotten', sender='mysimpleblog.notifier@gmail.com',
-                          recipients=[str(passfg_form.email.data),],
-                          html= f'Please open the link to change your password http://127.0.0.1:5000/users/password_recover/{user.id}')
-            mail.send(msg)
-            flash(f'Email sent to {passfg_form.email.data} successful', 'success')
+    if request.method == 'POST':
+        if passfg_form.validate_on_submit():
+            user = db.session.query(User).filter_by(email=passfg_form.email.data).first()
+            if user:
+                try:
+                    msg = Message(subject='Password forgotten', sender='mysimpleblog.notifier@gmail.com',
+                                  recipients=[str(passfg_form.email.data),],
+                                  html= f'Please open the link to change your password '
+                                        f'http://127.0.0.1:5000/users/password_recover/{user.id}')
+                    mail.send(msg)
+                    flash(f'Email sent to {passfg_form.email.data} successful', 'success')
+                    return render_template('password_forgot.html', passfg_form=passfg_form, success='success')
+                except Exception as err:
+                    flash(f'Mail sending error was found: {err}')
+            else:
+                flash(f'Email {passfg_form.email.data} not found', 'danger')
             return render_template('password_forgot.html', passfg_form=passfg_form)
-        else:
-            flash(f'Email {passfg_form.email.data} not found', 'danger')
+    else:
         return render_template('password_forgot.html', passfg_form=passfg_form)
-    return render_template('password_forgot.html', passfg_form=passfg_form)
+
 
 @users.route('/password_recover/<int:id>', methods=['POST', 'GET'])
 def passwd_recover(id):
@@ -108,7 +115,6 @@ def passwd_recover(id):
             user.passwd = generate_password_hash(passrec_form.passwd.data)
             user.dlm = datetime.now(timezone('Europe/Kiev'))
             user.ulm = id
-            print(user.passwd)
             db.session.commit()
             flash('Password changed successful', 'success')
         except BaseException as err:

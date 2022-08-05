@@ -1,9 +1,8 @@
-from datetime import datetime
-
 from flask import flash
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
-from extention import Base, db
+from extention import Base, db, OUR_TIME
 from flask_login import UserMixin
+from uuid import uuid4
 
 
 class User(UserMixin, Base):
@@ -14,13 +13,17 @@ class User(UserMixin, Base):
     passwd = Column(String(254), nullable=False)
     email = Column(String(100), nullable=False, unique=True)
     status = Column(Integer, ForeignKey('status.code'), default=1)
-    register_date = Column(DateTime, default=datetime.utcnow)
-    dlm = Column(DateTime, default=datetime.utcnow)
+    register_date = Column(DateTime, default=OUR_TIME)
+    dlm = Column(DateTime, default=OUR_TIME)
     ulm = Column(Integer, ForeignKey('user.id'))
     role_id = Column(Integer, ForeignKey('userrole.id'))
+    user_hash = Column(String(254), nullable=True, default='')
 
     def __repr__(self):
         return '<User %r>' % self.username
+
+    def get_user_hash(self, uid):
+        return str(uuid4())+str(uid)+str(uuid4())
 
 
 class UserRole(Base):
@@ -29,7 +32,7 @@ class UserRole(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     rolename = Column(String(100), nullable=False, unique=True)
     ulm = Column(Integer, ForeignKey('user.id'))
-    dlm = Column(DateTime, default=datetime.utcnow())
+    dlm = Column(DateTime, default=OUR_TIME)
     status = Column(Integer, ForeignKey('status.code'))
 
     def __repr__(self):
@@ -54,3 +57,4 @@ class UserRole(Base):
                 db.session.commit()
             except Exception as err:
                 raise f'Error changing roles status occurred: {err}'
+
