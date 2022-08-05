@@ -10,7 +10,7 @@ from flask_mail import Message
 
 from .models import User, UserRole
 from .forms import LoginForm, RegisterForm, PasswdForgotForm, PasswdRecover
-from extention import db, mail
+from extention import db, mail, OUR_TIME
 
 
 users = Blueprint('users', __name__, template_folder='templates/users', static_folder='/static')
@@ -85,15 +85,21 @@ def logout():
 @users.route('/password_forgot', methods=['POST', 'GET'])
 def passwd_forgot():
     passfg_form = PasswdForgotForm()
+    users = User()
     if request.method == 'POST':
         if passfg_form.validate_on_submit():
-            user = db.session.query(User).filter_by(email=passfg_form.email.data).first()
-            if user:
+            cur_user = db.session.query(User).filter_by(email=passfg_form.email.data).first()
+            if cur_user:
                 try:
+                    user_hash = users.get_user_hash(uid=cur_user.id)
+                    cur_user.user_hash = user_hash
+                    cur_user.ulm = cur_user.id
+                    cur_user.dlm = OUR_TIME
+                    db.session.commit()
                     msg = Message(subject='Password forgotten', sender='mysimpleblog.notifier@gmail.com',
                                   recipients=[str(passfg_form.email.data),],
                                   html= f'Please open the link to change your password '
-                                        f'http://127.0.0.1:5000/users/password_recover/{user.id}')
+                                        f'http://127.0.0.1:5000/users/password_recover/{user_hash}')
                     mail.send(msg)
                     flash(f'Email sent to {passfg_form.email.data} successful', 'success')
                     return render_template('password_forgot.html', passfg_form=passfg_form, success='success')
@@ -106,18 +112,26 @@ def passwd_forgot():
         return render_template('password_forgot.html', passfg_form=passfg_form)
 
 
-@users.route('/password_recover/<int:id>', methods=['POST', 'GET'])
-def passwd_recover(id):
+@users.route('/password_recover/<user_hash>', methods=['POST', 'GET'])
+def passwd_recover(user_hash):
+    '''
+    Password recover function
+    '''
     passrec_form = PasswdRecover()
-    if passrec_form.validate_on_submit():
-        try:
-            user = db.session.query(User).filter_by(id=id).first()
-            user.passwd = generate_password_hash(passrec_form.passwd.data)
-            user.dlm = datetime.now(timezone('Europe/Kiev'))
-            user.ulm = id
-            db.session.commit()
-            flash('Password changed successful', 'success')
-        except BaseException as err:
-            db.session.rollback()
-            flash(f'Password changing error found. {err}')
+    uhash = db.session.query(User).filter_by(user_hash=user_hash).first()
+    if uhash.user_hash == user_hash:
+        if passrec_form.validate_on_submit():
+            try:
+                user = db.session.query(User).filter_by(id=uhash.id).first()
+                user.passwd = generate_password_hash(passrec_form.passwd.data)
+                user.dlm = OUR_TIME
+                user.ulm = uhash.id
+                user.user_hash = ''
+                db.session.commit()
+                flash('Password changed successful', 'success')
+            except BaseException as err:
+                db.session.rollback()
+                flash(f'Password changing error found. {err}')
+    else:
+        flash('User_hash is not equel to user_hash data. Please try again to recover your password')
     return render_template('password_recover.html', passrec_form=passrec_form)

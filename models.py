@@ -72,6 +72,7 @@ class Comment(Base):
 
 
 class ArticleRating(Base):
+    __tablename__ = 'article_rating'
     id = Column(Integer, primary_key=True, nullable=False)
     rating = Column(Integer, nullable=False, default=0)
     avg_rating = Column(Integer, nullable=False, default=0)

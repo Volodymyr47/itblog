@@ -20,7 +20,7 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 
 from users.models import User, UserRole
-from models import Article, Status
+from models import Article, Status, ArticleRating
 from extention import Base
 
 target_metadata = [Base.metadata]
