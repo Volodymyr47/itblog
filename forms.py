@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import IntegerField, TextAreaField
-from wtforms.validators import InputRequired, Length, Regexp, Email, EqualTo, ValidationError
+from wtforms.validators import InputRequired
 
 
 class NewComment(FlaskForm):
@@ -9,6 +9,8 @@ class NewComment(FlaskForm):
     level = IntegerField()
 
 
+class Rating(FlaskForm):
+    rating = IntegerField()
 
 
 

@@ -5,6 +5,7 @@
 {% endblock %}
 
 {% block body %}
+
     <div class="container mt-5">
         <h1> Articles list</h1>
         {% if articles|length > 0 %}
@@ -19,6 +20,9 @@
                      {% else %}
                         <p><strong>Date of publish: {{ article.creation_date.date() }}</strong></p>
                      {% endif %}
+
+
+
                      <a href="/posts/{{ article.id }}" class="btn btn-info">View detailes</a>
                    </div>
                 {% endif %}
@@ -27,4 +31,5 @@
             <p>There is no articles yet</p>
         {% endif %}
     </div>
+
 {% endblock %}

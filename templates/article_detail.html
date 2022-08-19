@@ -15,6 +15,28 @@
              {% else %}
                 <p>Date of publish: {{ article.creation_date.date() }}</p>
              {% endif %}
+
+             <form method="post" name="article_rating" action="{{ url_for('article_rating', id=article.id) }}">
+               {{ rating_form.csrf_token }}
+                <div class="rating_items_block">
+                    <div class="rating_items">
+                            <input id="rating_item_5" class="rating_item" type="radio" value="5" name="rating">
+                            <label for="rating_item_5" class="rating_label"></label>
+                            <input id="rating_item_4" class="rating_item" type="radio" value="4" name="rating">
+                            <label for="rating_item_4" class="rating_label"></label>
+                            <input id="rating_item_3" class="rating_item" type="radio" value="3" name="rating">
+                            <label for="rating_item_3" class="rating_label"></label>
+                            <input id="rating_item_2" class="rating_item" type="radio" value="2" name="rating">
+                            <label for="rating_item_2" class="rating_label"></label>
+                            <input id="rating_item_1" class="rating_item" type="radio" value="1" name="rating">
+                            <label for="rating_item_1" class="rating_label"></label>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <p>{{ rating_form.current_user_rating }}</p>
+                    <button type="submit" class="btn btn-outline-warning">Send rating</button>
+                </div>
+             </form>
              <a href="/posts" class="btn btn-info">Back</a>
              {% if article.user_id == current_user.id %}
                 <a href="/posts/{{ article.id }}/update" class="btn btn-warning">Update</a>
@@ -77,6 +99,7 @@
                         </div>
                     </div>
                     {% endfor %}
+
 
                 </div>
             </div>

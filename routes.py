@@ -1,12 +1,12 @@
 from datetime import datetime
-from flask import render_template, request, redirect, flash, url_for
+from flask import render_template, request, redirect, flash, url_for, make_response
 from flask_login import current_user, login_required
 from werkzeug.exceptions import abort
 
 from app import app
-from extention import db
-from models import Article, Comment
-from forms import NewComment
+from extention import db, OUR_TIME
+from models import Article, Comment, ArticleRating
+from forms import NewComment, Rating
 
 
 @app.route('/')
@@ -46,17 +46,20 @@ def posts():
 
 
 @app.route('/posts/<int:id>')
-def article_detail(id):
+def article_detail(id, current_user_rating=''):
     '''
     Show article detail:
     '''
     comment_form = NewComment()
+    rating_form = Rating()
     current_comments_count = db.session.query(Comment).filter_by(article_id=id).count()
     comments = db.session.query(Comment).filter_by(article_id=id).order_by(Comment.id)
+    # current_user_rating = db.session.query(ArticleRating.rating).filter_by(user_id=current_user.id, article_id=id)
     if id:
         article = db.session.query(Article).get(id)
         return render_template('article_detail.html', article=article, comment_form=comment_form,
-                               current_comments_count=current_comments_count, comments=comments)
+                               current_comments_count=current_comments_count, comments=comments,
+                               current_user_rating=current_user_rating, rating_form=rating_form)
     else:
         return f'Post {id} does not exist'
 
@@ -113,26 +116,41 @@ def add_comment(id):
     comment = Comment()
     parent = 0
     level = -1
-
     comments = db.session.query(Comment).filter_by(article_id=id).order_by(Comment.dlm.desc())
-
     if comment_form.validate_on_submit():
-
         if comment_form.id.data is not None:
             parent = comment_form.id.data
-
         new_level = db.session.query(Comment.level).filter_by(article_id=id, id=parent).first()
         if new_level is None:
             new_level = level
         else:
             new_level = new_level[0]
-
-        flash(comment.add_comment(text=comment_form.comment_text.data, article_id=id, parent=parent,
-                                  level=new_level+1, ulm=current_user.id), 'success')
-        # flash('Comment has been added', 'success')
+        comment.add_comment(text=comment_form.comment_text.data, article_id=id, parent=parent,
+                                  level=new_level+1, ulm=current_user.id), 'success'
+        flash('Your comment has been added', 'success')
         return redirect(url_for('article_detail',id=id))
     else:
         flash(comment_form.errors, 'danger')
     current_comments_count = db.session.query(Comment).filter_by(article_id=id).count()
-    return render_template('article_detail.html', article=article, comment_form=comment_form,
-                           current_comments_count=current_comments_count,comments=comments)
+    return redirect(url_for('article_detail', id=id))
+
+
+@app.route('/posts/<int:id>', methods=['POST'])
+@login_required
+def article_rating(id):
+    ar = ArticleRating()
+    print(ar.get_avg_rating(art_id=id))
+    try:
+        rating_result = ArticleRating(rating=request.form['rating'],
+                                      avg_rating=ar.get_avg_rating(art_id=id),
+                                      article_id=id,
+                                      user_id=current_user.id,
+                                      dlm=OUR_TIME)
+        db.session.add(rating_result)
+        db.session.commit()
+        flash('Your rating has been added', 'success')
+    except BaseException as err:
+        db.session.rollback()
+        flash(f'RatingError: {err}')
+    return redirect(url_for('article_detail', id=id, current_user_rating=request.form['rating']))
+

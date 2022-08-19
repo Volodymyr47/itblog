@@ -1,0 +1,49 @@
+.rating_items_block {
+    position: relative;
+    font-size: 28px;
+    display: inline-block;
+}
+.rating_items_block::before {
+    content: "★★★★★";
+    display: block;
+}
+.rating_items {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: row-reverse;
+    overflow: hidden;
+}
+.rating_item {
+    position: absolute;
+    width: 0%;
+    height: 0%;
+    opacity: 0;
+    visibility: hidden;
+    top: 0;
+    left: 0;
+}
+.rating_label {
+    flex: 0,0,20%;
+    height: 100%;
+    cursor: pointer;
+    color: #FFF;
+}
+.rating_label::before {
+    content: "★";
+    display: block;
+    transition: color 0.3s ease 0s;
+}
+.rating_item:checked,
+.rating_item:checked ~ .rating_label{
+    color: #ffd300;
+
+}
+.rating_label:hover,
+.rating_label:hover ~ .rating_label,
+.rating_label:checked ~ .rating_label:hover {
+    color: #ffef9f;
+}

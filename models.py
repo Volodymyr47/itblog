@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, desc
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, func
 from extention import Base, db, OUR_TIME
 
 
@@ -83,9 +83,12 @@ class ArticleRating(Base):
     def __str__(self):
         return str(self.rating)
 
-    def get_avg_rating(self):
-        count = db.session.query(ArticleRating).filter_by(self.rating > 0).count()
-        summ = db.session.query(ArticleRating.rating).filter_by(self.rating > 0).sum()
-        return round(summ/count, 0)
+    def get_avg_rating(self, art_id):
+        count = db.session.query(ArticleRating).filter_by(article_id=art_id).count()
+        summ = db.session.query(func.sum(ArticleRating.rating)).filter_by(article_id=art_id).scalar()
+        result = 0
+        if count is not None and summ is not None:
+            result = round(summ/count, 0)
+        return result
 
 
